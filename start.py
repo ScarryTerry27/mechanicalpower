@@ -142,6 +142,10 @@ def start_settings():
 
 
 if __name__ == "__main__":
+    st.set_page_config(
+        page_title="Оценка риска вентилятор-ассоциированного повреждения легких",
+        layout="wide"
+    )
     start_settings()
     show_sidebar()
     pages = {
