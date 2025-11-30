@@ -153,55 +153,59 @@ def show_algorithm():
 
     st.markdown("### Диагностика: что растёт — «СПРОС» или «ЦЕНА»?")
 
+    # Инициализируем флаги, чтобы они были определены вне условных блоков
+    hr_high = pain = temp_high = laparoscopy = acidosis = False
+    compliance_trend = pneumoperitoneum_high = trendelenburg_high = bmi_high = lung_us_high = False
+
     with st.container(border=True):
         col_demand, col_price = st.columns(2)
 
-    score_demand = 0
-    score_price = 0
+        score_demand = 0
+        score_price = 0
 
-    with col_demand:
-        st.markdown("**Верхний полусектор: метаболический спрос («СПРОС») 🔼**")
-        etco2_up = st.checkbox("etCO₂ растёт по сравнению с исходным", key="algo_etco2_up")
+        with col_demand:
+            st.markdown("**Верхний полусектор: метаболический спрос («СПРОС») 🔼**")
+            etco2_up = st.checkbox("etCO₂ растёт по сравнению с исходным", key="algo_etco2_up")
 
-        if etco2_up:
-            st.markdown("**+1 если ДА:**")
-            hr_high = st.checkbox("ЧСС > 90 уд/мин", key="algo_hr_high")
-            pain = st.checkbox("Боль / выраженная симпатикотония", key="algo_pain")
-            temp_high = st.checkbox("Температура > 37°C", key="algo_temp_high")
-            laparoscopy = st.checkbox("Лапароскопия / экзогенная CO₂-нагрузка", key="algo_laparoscopy")
-            acidosis = st.checkbox("Метаболический ацидоз", key="algo_acidosis")
+            if etco2_up:
+                st.markdown("**+1 если ДА:**")
+                hr_high = st.checkbox("ЧСС > 90 уд/мин", key="algo_hr_high")
+                pain = st.checkbox("Боль / выраженная симпатикотония", key="algo_pain")
+                temp_high = st.checkbox("Температура > 37°C", key="algo_temp_high")
+                laparoscopy = st.checkbox("Лапароскопия / экзогенная CO₂-нагрузка", key="algo_laparoscopy")
+                acidosis = st.checkbox("Метаболический ацидоз", key="algo_acidosis")
 
-            score_demand = sum(
-                [
-                    hr_high,
-                    pain,
-                    temp_high,
-                    laparoscopy,
-                    acidosis,
-                ]
-            )
+                score_demand = sum(
+                    [
+                        hr_high,
+                        pain,
+                        temp_high,
+                        laparoscopy,
+                        acidosis,
+                    ]
+                )
 
-    with col_price:
-        st.markdown("**Нижний полусектор: свойства дыхательной системы («ЦЕНА») ⚙️**")
-        dp_high = st.checkbox("ΔP > 15 см H₂O", key="algo_dp_high")
+        with col_price:
+            st.markdown("**Нижний полусектор: свойства дыхательной системы («ЦЕНА») ⚙️**")
+            dp_high = st.checkbox("ΔP > 15 см H₂O", key="algo_dp_high")
 
-        if dp_high:
-            st.markdown("**+1 если ДА:**")
-            compliance_trend = st.checkbox("Тренд комплаенса ↓", key="algo_compliance_trend")
-            pneumoperitoneum_high = st.checkbox("Пневмоперитонеум > 10 мм рт.ст.", key="algo_pneumoperitoneum_high")
-            trendelenburg_high = st.checkbox("Положение Тренделенбурга > 10°", key="algo_trendelenburg_high")
-            bmi_high = st.checkbox("ИМТ > 30 кг/м²", key="algo_bmi_high")
-            lung_us_high = st.checkbox("Балл УЗИ лёгких > 6", key="algo_lung_us_high")
+            if dp_high:
+                st.markdown("**+1 если ДА:**")
+                compliance_trend = st.checkbox("Тренд комплаенса ↓", key="algo_compliance_trend")
+                pneumoperitoneum_high = st.checkbox("Пневмоперитонеум > 10 мм рт.ст.", key="algo_pneumoperitoneum_high")
+                trendelenburg_high = st.checkbox("Положение Тренделенбурга > 10°", key="algo_trendelenburg_high")
+                bmi_high = st.checkbox("ИМТ > 30 кг/м²", key="algo_bmi_high")
+                lung_us_high = st.checkbox("Балл УЗИ лёгких > 6", key="algo_lung_us_high")
 
-            score_price = sum(
-                [
-                    compliance_trend,
-                    pneumoperitoneum_high,
-                    trendelenburg_high,
-                    bmi_high,
-                    lung_us_high,
-                ]
-            )
+                score_price = sum(
+                    [
+                        compliance_trend,
+                        pneumoperitoneum_high,
+                        trendelenburg_high,
+                        bmi_high,
+                        lung_us_high,
+                    ]
+                )
 
     st.markdown(
         f"**Баллы по полусекторам:** СПРОС = {score_demand}, ЦЕНА = {score_price}"
@@ -213,35 +217,45 @@ def show_algorithm():
             "оцените пациента клинически и рассмотрите оба пути коррекции 🙂"
         )
 
+    # Подбор рекомендаций под конкретные галочки
+    recs_demand: list[str] = []
+    recs_price: list[str] = []
+
+    if score_demand >= 2:
+        if pain or acidosis:
+            recs_demand.append("- Контроль миоплегии, аналгезии, седации 💊")
+        if temp_high:
+            recs_demand.append("- Нормотермия 🌡️")
+        if laparoscopy:
+            recs_demand.append("- ↓Р пневмоперитонеума 💨")
+            recs_demand.append("- Устранение утечки CO₂ 🫧")
+        if hr_high:
+            recs_demand.append("- β-блокаторы / Дексдор ❤️")
+
+    if score_price >= 2:
+        if pneumoperitoneum_high:
+            recs_price.append("- ↓Р пневмоперитонеума 💨")
+        if trendelenburg_high:
+            recs_price.append("- ↓ угла п. Тренделенбурга ↘️")
+            recs_price.append("- Лапаролифтинг 🩺")
+        if compliance_trend or bmi_high or lung_us_high:
+            recs_price.append("- Миоплегия (TOF) 💪")
+
+    # Выводим ответы по двум полусекторам в отдельных колонках
     with st.container(border=True):
         col_answer_demand, col_answer_price = st.columns(2)
 
         with col_answer_demand:
             st.markdown("#### Ответ по СПРОСУ 🔼")
-            if score_demand >= 2:
-                st.markdown(
-                    """
-- Контроль миоплегии, аналгезии, седации 💊  
-- Нормотермия 🌡️  
-- ↓Р пневмоперитонеума 💨  
-- Устранение утечки CO₂ 🫧  
-- β-блокаторы / Дексдор ❤️
-                    """
-                )
+            if score_demand >= 2 and recs_demand:
+                st.markdown("\n".join(recs_demand))
             else:
                 st.markdown("_Меньше 2 баллов по СПРОСУ — приоритета нет._")
 
         with col_answer_price:
             st.markdown("#### Ответ по ЦЕНЕ ⚙️")
-            if score_price >= 2:
-                st.markdown(
-                    """
-- ↓Р пневмоперитонеума 💨  
-- ↓ угла п. Тренделенбурга ↘️  
-- Лапаролифтинг 🩺  
-- Миоплегия (TOF) 💪
-                    """
-                )
+            if score_price >= 2 and recs_price:
+                st.markdown("\n".join(recs_price))
             else:
                 st.markdown("_Меньше 2 баллов по ЦЕНЕ — приоритета нет._")
 
